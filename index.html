@@ -51,12 +51,73 @@
             </div>
         </div>
 
-        <!-- Main Media Placeholder (Seamless Loop Video) -->
-        <div class="w-full max-w-5xl aspect-video bg-[#0a0a0a] border border-[#2a2a2a] rounded-sm relative group overflow-hidden flex items-center justify-center">
-            <!-- Replace this <p> with a looping <video autoplay loop muted playsinline> or <iframe> when ready -->
-            <p class="font-bebas text-3xl md:text-4xl text-[#2a2a2a] tracking-widest text-center px-4 group-hover:scale-110 transition-transform duration-700">
-                FINAL LOOPING ANIMATION / VIDEO EMBED
-            </p>
+        <!-- Side-by-Side Synchronized 3-Version Video Showcase -->
+        <!-- Replace the src filenames below to match your exact .mp4 filenames in the repo -->
+        <div class="w-full max-w-6xl">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                
+                <!-- Version 01: Monochrome -->
+                <div class="aspect-square bg-[#0a0a0a] border border-[#2a2a2a] hover:border-white/40 rounded-sm relative group overflow-hidden flex items-center justify-center transition-colors duration-300">
+                    <video
+                        id="loop-video-1"
+                        src="./Skateboarder_90s.mp4"
+                        autoplay
+                        loop
+                        muted
+                        playsinline
+                        class="sync-video w-full h-full object-cover"
+                    ></video>
+                    <span class="absolute bottom-3 left-3 bg-black/75 border border-white/15 backdrop-blur-sm px-2.5 py-0.5 rounded text-xs font-bebas tracking-widest text-gray-200 pointer-events-none">
+                        01 &bull; MONOCHROME
+                    </span>
+                </div>
+
+                <!-- Version 02: Natural Grade -->
+                <div class="aspect-square bg-[#0a0a0a] border border-[#2a2a2a] hover:border-white/40 rounded-sm relative group overflow-hidden flex items-center justify-center transition-colors duration-300">
+                    <video
+                        id="loop-video-2"
+                        src="./Skateboarder_Modern.mp4"
+                        autoplay
+                        loop
+                        muted
+                        playsinline
+                        class="sync-video w-full h-full object-cover"
+                    ></video>
+                    <span class="absolute bottom-3 left-3 bg-black/75 border border-white/15 backdrop-blur-sm px-2.5 py-0.5 rounded text-xs font-bebas tracking-widest text-gray-200 pointer-events-none">
+                        02 &bull; NATURAL GRADE
+                    </span>
+                </div>
+
+                <!-- Version 03: Warm Grade -->
+                <div class="aspect-square bg-[#0a0a0a] border border-[#2a2a2a] hover:border-white/40 rounded-sm relative group overflow-hidden flex items-center justify-center transition-colors duration-300">
+                    <video
+                        id="loop-video-3"
+                        src="./Skateboarder_Main.mp4"
+                        autoplay
+                        loop
+                        muted
+                        playsinline
+                        class="sync-video w-full h-full object-cover"
+                    ></video>
+                    <span class="absolute bottom-3 left-3 bg-black/75 border border-white/15 backdrop-blur-sm px-2.5 py-0.5 rounded text-xs font-bebas tracking-widest text-gray-200 pointer-events-none">
+                        03 &bull; WARM GRADE
+                    </span>
+                </div>
+
+            </div>
+
+            <!-- Unified Synchronized Playback Controls -->
+            <div class="mt-4 flex flex-wrap items-center justify-center gap-3">
+                <button id="toggle-play-btn" type="button" class="bg-[#111111] hover:bg-white hover:text-black border border-[#2a2a2a] hover:border-white px-4 py-1.5 rounded text-xs md:text-sm font-bebas tracking-widest text-gray-200 transition-colors cursor-pointer active:scale-95">
+                    PAUSE ALL
+                </button>
+                <button id="toggle-sound-btn" type="button" class="bg-[#111111] hover:bg-white hover:text-black border border-[#2a2a2a] hover:border-white px-4 py-1.5 rounded text-xs md:text-sm font-bebas tracking-widest text-gray-200 transition-colors cursor-pointer active:scale-95">
+                    UNMUTE AUDIO
+                </button>
+                <button id="resync-btn" type="button" class="bg-[#111111] hover:bg-white hover:text-black border border-[#2a2a2a] hover:border-white px-4 py-1.5 rounded text-xs md:text-sm font-bebas tracking-widest text-gray-200 transition-colors cursor-pointer active:scale-95">
+                    RE-SYNC LOOPS
+                </button>
+            </div>
         </div>
 
         <!-- Project Details -->
@@ -121,6 +182,77 @@
         </div>
 
     </section>
+
+    <!-- Synchronized 3-Video Loop Controller -->
+    <script>
+        const syncVideos = Array.from(document.querySelectorAll('.sync-video'));
+        const togglePlayBtn = document.getElementById('toggle-play-btn');
+        const toggleSoundBtn = document.getElementById('toggle-sound-btn');
+        const resyncBtn = document.getElementById('resync-btn');
+
+        let isPlaying = true;
+        let isMuted = true;
+
+        // Keep all three videos aligned to the first video once loaded
+        function syncAllVideos(resetToStart = false) {
+            const masterTime = resetToStart ? 0 : (syncVideos[0]?.currentTime || 0);
+            syncVideos.forEach((vid) => {
+                if (Math.abs(vid.currentTime - masterTime) > 0.08 || resetToStart) {
+                    vid.currentTime = masterTime;
+                }
+            });
+        }
+
+        // Start all three together once ready
+        Promise.all(
+            syncVideos.map(
+                (vid) =>
+                    new Promise((resolve) => {
+                        if (vid.readyState >= 2) resolve();
+                        else vid.addEventListener('loadeddata', resolve, { once: true });
+                    })
+            )
+        ).then(() => {
+            syncAllVideos(true);
+            syncVideos.forEach((vid) => vid.play().catch(() => {}));
+        });
+
+        // Play / Pause all three simultaneously
+        if (togglePlayBtn) {
+            togglePlayBtn.addEventListener('click', () => {
+                isPlaying = !isPlaying;
+                if (isPlaying) {
+                    syncAllVideos(false);
+                    syncVideos.forEach((vid) => vid.play().catch(() => {}));
+                    togglePlayBtn.textContent = 'PAUSE ALL';
+                } else {
+                    syncVideos.forEach((vid) => vid.pause());
+                    togglePlayBtn.textContent = 'PLAY ALL';
+                }
+            });
+        }
+
+        // Toggle audio on only the first video so the music doesn't triple-echo
+        if (toggleSoundBtn) {
+            toggleSoundBtn.addEventListener('click', () => {
+                isMuted = !isMuted;
+                syncVideos.forEach((vid, idx) => {
+                    vid.muted = idx === 0 ? isMuted : true;
+                });
+                toggleSoundBtn.textContent = isMuted ? 'UNMUTE AUDIO' : 'MUTE AUDIO';
+            });
+        }
+
+        // Manual restart & re-sync button
+        if (resyncBtn) {
+            resyncBtn.addEventListener('click', () => {
+                syncAllVideos(true);
+                if (isPlaying) {
+                    syncVideos.forEach((vid) => vid.play().catch(() => {}));
+                }
+            });
+        }
+    </script>
 
 </body>
 </html>
